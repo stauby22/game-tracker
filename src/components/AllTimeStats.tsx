@@ -17,6 +17,7 @@ export default function AllTimeStats({ history, onClear, onBack }: Props) {
     'phase-10': {},
     'mexican-train': {},
     'skip-bo': {},
+    'cribbage': {},
   };
 
   history.forEach((entry) => {
@@ -29,6 +30,7 @@ export default function AllTimeStats({ history, onClear, onBack }: Props) {
     'phase-10': 'Phase 10',
     'mexican-train': 'Mexican Train',
     'skip-bo': 'Skip-Bo',
+    'cribbage': 'Cribbage',
   };
 
   return (

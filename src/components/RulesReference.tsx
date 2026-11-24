@@ -3,6 +3,7 @@ import { DIRTY_DEUCE_CARD_VALUES, DIRTY_DEUCE_RULES } from '../games/dirtyDeuce'
 import { PHASE_10_CARD_VALUES, PHASE_10_RULES, PHASES } from '../games/phaseTen';
 import { MEXICAN_TRAIN_RULES } from '../games/mexicanTrain';
 import { SKIP_BO_RULES } from '../games/skipBo';
+import { CRIBBAGE_RULES } from '../games/cribbage';
 
 interface Props {
   gameId: GameId;
@@ -34,6 +35,7 @@ export default function RulesReference({ gameId, onClose }: Props) {
     'phase-10': 'Phase 10 Rules',
     'mexican-train': 'Mexican Train Rules',
     'skip-bo': 'Skip-Bo Rules',
+    'cribbage': 'Cribbage Rules',
   };
 
   return (
@@ -93,7 +95,9 @@ export default function RulesReference({ gameId, onClose }: Props) {
                   ? PHASE_10_RULES
                   : gameId === 'mexican-train'
                   ? MEXICAN_TRAIN_RULES
-                  : SKIP_BO_RULES
+                  : gameId === 'skip-bo'
+                  ? SKIP_BO_RULES
+                  : CRIBBAGE_RULES
               )}
             </div>
           </div>

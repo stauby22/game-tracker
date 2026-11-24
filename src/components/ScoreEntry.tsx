@@ -98,6 +98,7 @@ export default function ScoreEntry({
     'phase-10': 'Phase 10',
     'mexican-train': 'Mexican Train',
     'skip-bo': 'Skip-Bo',
+    'cribbage': 'Cribbage',
   };
 
   // Skip-Bo win tracker UI

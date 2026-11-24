@@ -1,4 +1,4 @@
-export type GameId = 'dirty-deuce' | 'phase-10' | 'mexican-train' | 'skip-bo';
+export type GameId = 'dirty-deuce' | 'phase-10' | 'mexican-train' | 'skip-bo' | 'cribbage';
 
 export interface PlayerRoundScore {
   player: string;
@@ -36,6 +36,11 @@ export interface GameMeta {
   tagline: string;
   color: string;
   accent: string;
+  // When true, highest cumulative total wins (e.g. cribbage to 121).
+  // Default/omitted = lowest total wins.
+  highWins?: boolean;
+  // Target score to win, if the game has one.
+  target?: number;
 }
 
 export const GAMES: GameMeta[] = [
@@ -66,5 +71,14 @@ export const GAMES: GameMeta[] = [
     tagline: 'Empty your stockpile first',
     color: 'bg-purple-50',
     accent: 'border-purple-400',
+  },
+  {
+    id: 'cribbage',
+    name: 'Cribbage',
+    tagline: 'First to peg 121 wins',
+    color: 'bg-orange-50',
+    accent: 'border-orange-400',
+    highWins: true,
+    target: 121,
   },
 ];

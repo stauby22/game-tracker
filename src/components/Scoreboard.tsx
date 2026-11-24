@@ -1,4 +1,5 @@
 import type { GameSession } from '../types';
+import { GAMES } from '../types';
 
 interface Props {
   session: GameSession;
@@ -14,13 +15,15 @@ export function getRunningTotals(session: GameSession): { player: string; total:
     });
   });
 
+  const highWins = GAMES.find((g) => g.id === session.gameId)?.highWins ?? false;
+
   return session.players
     .map((p) => ({
       player: p,
       total: totals[p] ?? 0,
       phase: session.playerPhases?.[p],
     }))
-    .sort((a, b) => a.total - b.total);
+    .sort((a, b) => (highWins ? b.total - a.total : a.total - b.total));
 }
 
 export default function Scoreboard({ session }: Props) {

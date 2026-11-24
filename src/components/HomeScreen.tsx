@@ -10,6 +10,7 @@ const gameColors: Record<GameId, { bg: string; border: string; dot: string }> = 
   'phase-10': { bg: 'bg-blue-50', border: 'border-blue-200', dot: 'bg-blue-400' },
   'mexican-train': { bg: 'bg-green-50', border: 'border-green-200', dot: 'bg-green-400' },
   'skip-bo': { bg: 'bg-purple-50', border: 'border-purple-200', dot: 'bg-purple-400' },
+  'cribbage': { bg: 'bg-orange-50', border: 'border-orange-200', dot: 'bg-orange-400' },
 };
 
 const gameEmojis: Record<GameId, string> = {
@@ -17,6 +18,7 @@ const gameEmojis: Record<GameId, string> = {
   'phase-10': '🎴',
   'mexican-train': '🚂',
   'skip-bo': '♠️',
+  'cribbage': '♣️',
 };
 
 export default function HomeScreen({ onStartGame, onViewStats }: Props) {
