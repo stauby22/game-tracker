@@ -75,7 +75,7 @@ export const GAMES: GameMeta[] = [
   {
     id: 'cribbage',
     name: 'Cribbage',
-    tagline: 'First to peg 121 wins',
+    tagline: 'Interactive pegging board to 121',
     color: 'bg-orange-50',
     accent: 'border-orange-400',
     highWins: true,

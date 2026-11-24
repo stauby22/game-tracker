@@ -21,6 +21,11 @@ export default function App() {
   const { history, addEntry, clearHistory } = useGameHistory();
 
   function handleSelectGame(gameId: GameId) {
+    // Cribbage opens the standalone visual pegging board instead of the tracker flow.
+    if (gameId === 'cribbage') {
+      window.location.href = '/cribbage-board.html';
+      return;
+    }
     setPendingGameId(gameId);
     setScreen('setup');
   }

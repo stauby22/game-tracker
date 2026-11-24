@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cribbage Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ededee; --panel:#ffffff; --panel-2:#fafafa;
+    --line:#eeeeee; --line-mid:#e0e0e0; --line-strong:#111111;
+    --text:#111111; --text-dim:#5d5c63; --text-faint:#999999; --text-mute:#c4c4c4;
+    --accent:#e5341f; --accent-soft:#fdf3f2; --accent-border:#f3c4be;
+    --p1:#e5341f; --p2:#2b6cb0; --p3:#2f8f5b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px;}
+  .wrap{max-width:860px;margin:0 auto;}
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+  h1{font-size:22px;font-weight:600;letter-spacing:-0.01em;}
+  h1 small{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-faint);font-weight:400;margin-left:8px;}
+  .toolbar{display:flex;gap:8px;}
+  button{font-family:inherit;cursor:pointer;border:1px solid var(--line-mid);background:var(--panel);color:var(--text);border-radius:8px;padding:7px 12px;font-size:13px;transition:all .12s;}
+  button:hover{border-color:var(--line-strong);}
+  button:active{transform:translateY(1px);}
+  button.ghost{background:transparent;color:var(--text-dim);}
+  .players{display:grid;gap:14px;grid-template-columns:1fr;}
+  .card{background:var(--panel);border:1px solid var(--line-mid);border-radius:14px;padding:16px;}
+  .pc-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .pc-name{display:flex;align-items:center;gap:10px;}
+  .dot{width:14px;height:14px;border-radius:50%;flex:0 0 auto;}
+  .pc-name input{font-family:inherit;font-size:16px;font-weight:600;border:none;background:transparent;color:var(--text);width:140px;border-bottom:1px dashed transparent;padding:2px 0;}
+  .pc-name input:focus{outline:none;border-bottom-color:var(--line-mid);}
+  .score{font-family:'DM Mono',monospace;font-size:34px;font-weight:500;line-height:1;}
+  .score small{font-size:13px;color:var(--text-faint);margin-left:6px;}
+  .pegrow{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px;}
+  .pegrow button{font-family:'DM Mono',monospace;min-width:40px;padding:8px 6px;font-size:14px;}
+  .pegrow button.hot{color:var(--accent);border-color:var(--accent-border);background:var(--accent-soft);}
+  .custom{display:flex;gap:6px;align-items:center;margin-top:4px;}
+  .custom input{font-family:'DM Mono',monospace;width:64px;padding:8px;border:1px solid var(--line-mid);border-radius:8px;font-size:14px;text-align:center;}
+  .custom input:focus{outline:none;border-color:var(--line-strong);}
+  .custom .spacer{flex:1;}
+  .track{margin-top:6px;}
+  svg{width:100%;height:auto;display:block;}
+  .legend{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-faint);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;}
+  .winner{background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);border-radius:14px;padding:16px;text-align:center;font-size:17px;font-weight:600;margin-bottom:14px;}
+  .winner small{display:block;font-family:'DM Mono',monospace;font-weight:400;font-size:12px;color:var(--text-dim);margin-top:4px;}
+  .foot{text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-mute);margin-top:22px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/" style="display:inline-block;font-family:'DM Mono',monospace;font-size:12px;color:var(--text-faint);text-decoration:none;margin-bottom:14px;">&larr; Games</a>
+  <header>
+    <h1>Cribbage<small>121 &middot; peg to win</small></h1>
+    <div class="toolbar">
+      <button class="ghost" id="addPlayer">+ player</button>
+      <button class="ghost" id="newGame">New game</button>
+    </div>
+  </header>
+  <div id="winner"></div>
+  <div class="players" id="players"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+const WIN=121, SKUNK=91, DBLSKUNK=61;
+const QUICK=[1,2,3,4,5,6,7,8,12,15,16,19,20,24,29];
+const COLORS=['--p1','--p2','--p3'];
+const DEFAULT_NAMES=['Player 1','Player 2','Player 3'];
+
+let state=load()||freshState();
+
+function freshState(){
+  return {players:[mkPlayer(0),mkPlayer(1)]};
+}
+function mkPlayer(i){
+  return {name:DEFAULT_NAMES[i]||('Player '+(i+1)),color:COLORS[i%3],front:0,back:0,history:[]};
+}
+function save(){try{localStorage.setItem('cribbage',JSON.stringify(state));}catch(e){}}
+function load(){try{const s=localStorage.getItem('cribbage');return s?JSON.parse(s):null;}catch(e){return null;}}
+
+function winnerIdx(){
+  for(let i=0;i<state.players.length;i++) if(state.players[i].front>=WIN) return i;
+  return -1;
+}
+function addPoints(i,pts){
+  if(winnerIdx()>=0) return;
+  pts=parseInt(pts,10);
+  if(!pts||pts<1) return;
+  const p=state.players[i];
+  p.history.push({back:p.back,front:p.front});
+  p.back=p.front;
+  p.front=Math.min(WIN,p.front+pts);
+  save();render();
+}
+function undo(i){
+  const p=state.players[i];
+  if(!p.history.length) return;
+  const h=p.history.pop();
+  p.back=h.back;p.front=h.front;
+  save();render();
+}
+function addPlayer(){
+  if(state.players.length>=3) return;
+  state.players.push(mkPlayer(state.players.length));
+  save();render();
+}
+function newGame(){
+  if(!confirm('Start a new game? Scores will be reset.')) return;
+  state.players.forEach(p=>{p.front=0;p.back=0;p.history=[];});
+  save();render();
+}
+
+// Build an S-shaped cribbage track: 3 streets, holes grouped in 5s.
+function trackSVG(player){
+  const cssv=getComputedStyle(document.documentElement);
+  const col=cssv.getPropertyValue(player.color).trim()||'#e5341f';
+  const perRow=30, rows=Math.ceil(WIN/perRow); // 1..120 across 4 rows + game hole
+  const R=5, gap=14, groupGap=6, padX=16, padY=16, rowH=30;
+  const w=padX*2 + perRow*gap + (perRow/5-1)*groupGap;
+  const h=padY*2 + rows*rowH + 28;
+  let holes='';
+  const pos={}; // hole number -> {x,y}
+  for(let n=1;n<=120;n++){
+    const idx=n-1;
+    let row=Math.floor(idx/perRow);
+    let col0=idx%perRow;
+    // serpentine: even rows L->R, odd rows R->L
+    let dispCol=(row%2===0)?col0:(perRow-1-col0);
+    const groups=Math.floor(dispCol/5);
+    const x=padX + dispCol*gap + groups*groupGap + R;
+    const y=padY + row*rowH + R;
+    pos[n]={x,y};
+    const past=(n<=player.front);
+    holes+=`<circle cx="${x}" cy="${y}" r="${R}" fill="${past?col:'#ffffff'}" fill-opacity="${past?0.18:1}" stroke="${past?col:'#d8d8da'}" stroke-width="1"/>`;
+    if(n%5===0){
+      holes+=`<text x="${x}" y="${y+16}" font-family="DM Mono, monospace" font-size="8" fill="#bbb" text-anchor="middle">${n}</text>`;
+    }
+  }
+  // game hole (121) centered below
+  const gx=w/2, gy=padY+rows*rowH+6;
+  const won=player.front>=WIN;
+  holes+=`<circle cx="${gx}" cy="${gy}" r="7" fill="${won?col:'#ffffff'}" fill-opacity="${won?0.2:1}" stroke="${won?col:'#111'}" stroke-width="1.5"/>`;
+  holes+=`<text x="${gx}" y="${gy+20}" font-family="DM Mono, monospace" font-size="9" fill="#999" text-anchor="middle">121 · game</text>`;
+  // skunk line marker at 91
+  if(pos[SKUNK]){const s=pos[SKUNK];holes+=`<line x1="${s.x}" y1="${s.y-10}" x2="${s.x}" y2="${s.y+10}" stroke="#c4c4c4" stroke-width="1" stroke-dasharray="2,2"/>`;holes+=`<text x="${s.x}" y="${s.y-13}" font-family="DM Mono, monospace" font-size="7" fill="#c4c4c4" text-anchor="middle">skunk</text>`;}
+  // pegs
+  function peg(n,solid){
+    if(n<1) return '';
+    const P = (n>=WIN)? {x:gx,y:gy} : pos[n]||pos[120];
+    return `<circle cx="${P.x}" cy="${P.y}" r="${R-1}" fill="${solid?col:'#ffffff'}" stroke="${col}" stroke-width="2"/>`;
+  }
+  const pegs=peg(player.back,false)+peg(player.front,true);
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${holes}${pegs}</svg>`;
+}
+
+function render(){
+  const wi=winnerIdx();
+  const wEl=document.getElementById('winner');
+  if(wi>=0){
+    const p=state.players[wi];
+    const others=state.players.filter((_,i)=>i!==wi);
+    let tag='';
+    const low=Math.min(...others.map(o=>o.front));
+    if(low<DBLSKUNK) tag='Double skunk! 😼';
+    else if(low<SKUNK) tag='Skunk! 🦨';
+    wEl.innerHTML=`<div class="winner">${escapeHtml(p.name)} wins 🏁<small>${tag||('final: '+state.players.map(o=>o.front).join(' – '))}</small></div>`;
+  } else wEl.innerHTML='';
+
+  const box=document.getElementById('players');
+  box.innerHTML='';
+  state.players.forEach((p,i)=>{
+    const col=`var(${p.color})`;
+    const card=document.createElement('div');
+    card.className='card';
+    const quick=QUICK.map(q=>`<button data-add="${i}" data-pts="${q}" class="${q===2||q===15?'hot':''}">+${q}</button>`).join('');
+    card.innerHTML=`
+      <div class="pc-top">
+        <div class="pc-name">
+          <span class="dot" style="background:${col}"></span>
+          <input value="${escapeAttr(p.name)}" data-name="${i}" maxlength="18">
+        </div>
+        <div class="score" style="color:${col}">${p.front}<small>/ 121</small></div>
+      </div>
+      <div class="pegrow">${quick}</div>
+      <div class="custom">
+        <input type="number" min="1" max="60" placeholder="pts" data-input="${i}">
+        <button data-addcustom="${i}">Add</button>
+        <span class="spacer"></span>
+        <button class="ghost" data-undo="${i}">Undo</button>
+      </div>
+      <div class="track">${trackSVG(p)}</div>
+      <div class="legend"><span>● front peg (current)</span><span>○ back peg (last)</span><span>to go: ${Math.max(0,WIN-p.front)}</span></div>
+    `;
+    box.appendChild(card);
+  });
+  document.getElementById('addPlayer').style.display=state.players.length>=3?'none':'';
+  document.getElementById('foot').textContent='Pegs leapfrog each other — the front peg is your score. First to 121 wins.';
+  wire();
+}
+
+function wire(){
+  document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addPoints(+b.dataset.add,+b.dataset.pts));
+  document.querySelectorAll('[data-addcustom]').forEach(b=>b.onclick=()=>{const inp=document.querySelector(`[data-input="${b.dataset.addcustom}"]`);addPoints(+b.dataset.addcustom,inp.value);inp.value='';});
+  document.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>undo(+b.dataset.undo));
+  document.querySelectorAll('[data-name]').forEach(inp=>inp.onchange=()=>{state.players[+inp.dataset.name].name=inp.value||('Player '+(+inp.dataset.name+1));save();render();});
+  document.querySelectorAll('[data-input]').forEach(inp=>inp.onkeydown=(e)=>{if(e.key==='Enter'){addPoints(+inp.dataset.input,inp.value);inp.value='';}});
+}
+function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function escapeAttr(s){return String(s).replace(/"/g,'&quot;');}
+
+document.getElementById('addPlayer').onclick=addPlayer;
+document.getElementById('newGame').onclick=newGame;
+render();
+</script>
+</body>
+</html>
