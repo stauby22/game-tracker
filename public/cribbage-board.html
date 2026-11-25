@@ -18,36 +18,37 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px;}
   .wrap{max-width:860px;margin:0 auto;}
-  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
   h1{font-size:22px;font-weight:600;letter-spacing:-0.01em;}
   h1 small{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-faint);font-weight:400;margin-left:8px;}
   .toolbar{display:flex;gap:8px;}
   button{font-family:inherit;cursor:pointer;border:1px solid var(--line-mid);background:var(--panel);color:var(--text);border-radius:8px;padding:7px 12px;font-size:13px;transition:all .12s;}
   button:hover{border-color:var(--line-strong);}
   button:active{transform:translateY(1px);}
+  button:disabled{opacity:.4;cursor:default;}
   button.ghost{background:transparent;color:var(--text-dim);}
-  .players{display:grid;gap:14px;grid-template-columns:1fr;}
-  .card{background:var(--panel);border:1px solid var(--line-mid);border-radius:14px;padding:16px;}
-  .pc-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .board{background:var(--panel);border:1px solid var(--line-mid);border-radius:16px;padding:14px 12px;margin-bottom:16px;overflow:hidden;}
+  .board svg{width:100%;height:auto;display:block;}
+  .players{display:grid;gap:12px;grid-template-columns:1fr;}
+  .card{background:var(--panel);border:1px solid var(--line-mid);border-radius:14px;padding:14px;}
+  .pc-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
   .pc-name{display:flex;align-items:center;gap:10px;}
   .dot{width:14px;height:14px;border-radius:50%;flex:0 0 auto;}
-  .pc-name input{font-family:inherit;font-size:16px;font-weight:600;border:none;background:transparent;color:var(--text);width:140px;border-bottom:1px dashed transparent;padding:2px 0;}
+  .pc-name input{font-family:inherit;font-size:16px;font-weight:600;border:none;background:transparent;color:var(--text);width:130px;border-bottom:1px dashed transparent;padding:2px 0;}
   .pc-name input:focus{outline:none;border-bottom-color:var(--line-mid);}
-  .score{font-family:'DM Mono',monospace;font-size:34px;font-weight:500;line-height:1;}
-  .score small{font-size:13px;color:var(--text-faint);margin-left:6px;}
-  .pegrow{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px;}
-  .pegrow button{font-family:'DM Mono',monospace;min-width:40px;padding:8px 6px;font-size:14px;}
+  .score{font-family:'DM Mono',monospace;font-size:30px;font-weight:500;line-height:1;}
+  .score small{font-size:12px;color:var(--text-faint);margin-left:5px;}
+  .pegrow{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .pegrow button{font-family:'DM Mono',monospace;min-width:38px;padding:7px 5px;font-size:14px;}
   .pegrow button.hot{color:var(--accent);border-color:var(--accent-border);background:var(--accent-soft);}
-  .custom{display:flex;gap:6px;align-items:center;margin-top:4px;}
-  .custom input{font-family:'DM Mono',monospace;width:64px;padding:8px;border:1px solid var(--line-mid);border-radius:8px;font-size:14px;text-align:center;}
+  .custom{display:flex;gap:6px;align-items:center;margin-top:2px;}
+  .custom input{font-family:'DM Mono',monospace;width:60px;padding:7px;border:1px solid var(--line-mid);border-radius:8px;font-size:14px;text-align:center;}
   .custom input:focus{outline:none;border-color:var(--line-strong);}
   .custom .spacer{flex:1;}
-  .track{margin-top:6px;}
-  svg{width:100%;height:auto;display:block;}
-  .legend{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-faint);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;}
+  .legend{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-faint);margin-top:6px;}
   .winner{background:var(--accent-soft);border:1px solid var(--accent-border);color:var(--accent);border-radius:14px;padding:16px;text-align:center;font-size:17px;font-weight:600;margin-bottom:14px;}
   .winner small{display:block;font-family:'DM Mono',monospace;font-weight:400;font-size:12px;color:var(--text-dim);margin-top:4px;}
-  .foot{text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-mute);margin-top:22px;}
+  .foot{text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-mute);margin-top:20px;}
 </style>
 </head>
 <body>
@@ -56,35 +57,32 @@
   <header>
     <h1>Cribbage<small>121 &middot; peg to win</small></h1>
     <div class="toolbar">
-      <button class="ghost" id="addPlayer">+ player</button>
+      <button class="ghost" id="addPlayer">+ lane</button>
       <button class="ghost" id="newGame">New game</button>
     </div>
   </header>
   <div id="winner"></div>
+  <div class="board"><div id="board"></div></div>
   <div class="players" id="players"></div>
-  <div class="foot" id="foot"></div>
+  <div class="foot">Each player gets a lane. Pegs leapfrog — the front peg is your score. First to 121 wins.</div>
 </div>
 <script>
 const WIN=121, SKUNK=91, DBLSKUNK=61;
 const QUICK=[1,2,3,4,5,6,7,8,12,15,16,19,20,24,29];
 const COLORS=['--p1','--p2','--p3'];
 const DEFAULT_NAMES=['Player 1','Player 2','Player 3'];
+const MAX_LANES=3, MIN_LANES=2;
 
 let state=load()||freshState();
 
-function freshState(){
-  return {players:[mkPlayer(0),mkPlayer(1)]};
-}
-function mkPlayer(i){
-  return {name:DEFAULT_NAMES[i]||('Player '+(i+1)),color:COLORS[i%3],front:0,back:0,history:[]};
-}
+function freshState(){return {players:[mkPlayer(0),mkPlayer(1)]};}
+function mkPlayer(i){return {name:DEFAULT_NAMES[i]||('Player '+(i+1)),color:COLORS[i%3],front:0,back:0,history:[]};}
 function save(){try{localStorage.setItem('cribbage',JSON.stringify(state));}catch(e){}}
-function load(){try{const s=localStorage.getItem('cribbage');return s?JSON.parse(s):null;}catch(e){return null;}}
+function load(){try{const s=localStorage.getItem('cribbage');const o=s?JSON.parse(s):null;return (o&&o.players&&o.players.length>=MIN_LANES)?o:null;}catch(e){return null;}}
 
-function winnerIdx(){
-  for(let i=0;i<state.players.length;i++) if(state.players[i].front>=WIN) return i;
-  return -1;
-}
+function winnerIdx(){for(let i=0;i<state.players.length;i++) if(state.players[i].front>=WIN) return i; return -1;}
+function cssColor(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()||'#e5341f';}
+
 function addPoints(i,pts){
   if(winnerIdx()>=0) return;
   pts=parseInt(pts,10);
@@ -95,65 +93,73 @@ function addPoints(i,pts){
   p.front=Math.min(WIN,p.front+pts);
   save();render();
 }
-function undo(i){
-  const p=state.players[i];
-  if(!p.history.length) return;
-  const h=p.history.pop();
-  p.back=h.back;p.front=h.front;
-  save();render();
-}
-function addPlayer(){
-  if(state.players.length>=3) return;
-  state.players.push(mkPlayer(state.players.length));
-  save();render();
-}
-function newGame(){
-  if(!confirm('Start a new game? Scores will be reset.')) return;
-  state.players.forEach(p=>{p.front=0;p.back=0;p.history=[];});
-  save();render();
-}
+function undo(i){const p=state.players[i];if(!p.history.length)return;const h=p.history.pop();p.back=h.back;p.front=h.front;save();render();}
+function addPlayer(){if(state.players.length>=MAX_LANES)return;state.players.push(mkPlayer(state.players.length));save();render();}
+function removePlayer(i){if(state.players.length<=MIN_LANES)return;state.players.splice(i,1);state.players.forEach((p,idx)=>{p.color=COLORS[idx%3];});save();render();}
+function newGame(){if(!confirm('Start a new game? Scores will be reset.'))return;state.players.forEach(p=>{p.front=0;p.back=0;p.history=[];});save();render();}
 
-// Build an S-shaped cribbage track: 3 streets, holes grouped in 5s.
-function trackSVG(player){
-  const cssv=getComputedStyle(document.documentElement);
-  const col=cssv.getPropertyValue(player.color).trim()||'#e5341f';
-  const perRow=30, rows=Math.ceil(WIN/perRow); // 1..120 across 4 rows + game hole
-  const R=5, gap=14, groupGap=6, padX=16, padY=16, rowH=30;
-  const w=padX*2 + perRow*gap + (perRow/5-1)*groupGap;
-  const h=padY*2 + rows*rowH + 28;
-  let holes='';
-  const pos={}; // hole number -> {x,y}
-  for(let n=1;n<=120;n++){
-    const idx=n-1;
-    let row=Math.floor(idx/perRow);
-    let col0=idx%perRow;
-    // serpentine: even rows L->R, odd rows R->L
-    let dispCol=(row%2===0)?col0:(perRow-1-col0);
+// Unified multi-lane serpentine board.
+function boardSVG(players){
+  const lanes=players.length;
+  const perRow=30, rows=4;
+  const R=3.4, laneGap=9, colGap=12.5, groupGap=7, padX=22, padTop=14;
+  const bandTopPad=9, bandBottomPad=13;
+  const bandH=bandTopPad+(lanes-1)*laneGap+bandBottomPad;
+  const w=padX*2 + (perRow-1)*colGap + 5*groupGap + R*2;
+  const gameY=padTop+rows*bandH+14;
+  const h=gameY+22;
+
+  function pos(n,L){
+    const idx=n-1, row=Math.floor(idx/perRow), col0=idx%perRow;
+    const dispCol=(row%2===0)?col0:(perRow-1-col0);
     const groups=Math.floor(dispCol/5);
-    const x=padX + dispCol*gap + groups*groupGap + R;
-    const y=padY + row*rowH + R;
-    pos[n]={x,y};
-    const past=(n<=player.front);
-    holes+=`<circle cx="${x}" cy="${y}" r="${R}" fill="${past?col:'#ffffff'}" fill-opacity="${past?0.18:1}" stroke="${past?col:'#d8d8da'}" stroke-width="1"/>`;
-    if(n%5===0){
-      holes+=`<text x="${x}" y="${y+16}" font-family="DM Mono, monospace" font-size="8" fill="#bbb" text-anchor="middle">${n}</text>`;
+    const x=padX + dispCol*colGap + groups*groupGap + R;
+    const y=padTop + row*bandH + bandTopPad + L*laneGap;
+    return {x,y};
+  }
+  const gx=w/2;
+  let svg='';
+
+  // holes per lane
+  for(let L=0;L<lanes;L++){
+    const col=cssColor(players[L].color);
+    for(let n=1;n<=120;n++){
+      const P=pos(n,L);
+      const past=(n<=players[L].front);
+      svg+=`<circle cx="${P.x.toFixed(1)}" cy="${P.y.toFixed(1)}" r="${R}" fill="${past?col:'#ffffff'}" fill-opacity="${past?0.2:1}" stroke="${past?col:'#dadadc'}" stroke-width="1"/>`;
     }
+    // start color dot at left of row 0
+    const s0=pos(1,L);
+    svg+=`<circle cx="${(padX-12).toFixed(1)}" cy="${s0.y.toFixed(1)}" r="${R+0.5}" fill="${col}"/>`;
   }
-  // game hole (121) centered below
-  const gx=w/2, gy=padY+rows*rowH+6;
-  const won=player.front>=WIN;
-  holes+=`<circle cx="${gx}" cy="${gy}" r="7" fill="${won?col:'#ffffff'}" fill-opacity="${won?0.2:1}" stroke="${won?col:'#111'}" stroke-width="1.5"/>`;
-  holes+=`<text x="${gx}" y="${gy+20}" font-family="DM Mono, monospace" font-size="9" fill="#999" text-anchor="middle">121 · game</text>`;
-  // skunk line marker at 91
-  if(pos[SKUNK]){const s=pos[SKUNK];holes+=`<line x1="${s.x}" y1="${s.y-10}" x2="${s.x}" y2="${s.y+10}" stroke="#c4c4c4" stroke-width="1" stroke-dasharray="2,2"/>`;holes+=`<text x="${s.x}" y="${s.y-13}" font-family="DM Mono, monospace" font-size="7" fill="#c4c4c4" text-anchor="middle">skunk</text>`;}
+  // hole-number labels every 5 (under each band's last lane)
+  for(let n=5;n<=120;n+=5){
+    const P=pos(n,0);
+    const row=Math.floor((n-1)/perRow);
+    const yLab=padTop + row*bandH + bandTopPad + (lanes-1)*laneGap + 10;
+    svg+=`<text x="${P.x.toFixed(1)}" y="${yLab.toFixed(1)}" font-family="DM Mono, monospace" font-size="7" fill="#c4c4c4" text-anchor="middle">${n}</text>`;
+  }
+  // skunk line at 91
+  {const sp=pos(SKUNK,0);const row=Math.floor((SKUNK-1)/perRow);const y1=padTop+row*bandH+2;const y2=padTop+row*bandH+bandTopPad+(lanes-1)*laneGap+4;
+   svg+=`<line x1="${sp.x.toFixed(1)}" y1="${y1}" x2="${sp.x.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#c4c4c4" stroke-width="1" stroke-dasharray="2,2"/>`;
+   svg+=`<text x="${sp.x.toFixed(1)}" y="${(y1-2)}" font-family="DM Mono, monospace" font-size="6.5" fill="#c4c4c4" text-anchor="middle">skunk</text>`;}
+  // game hole (121)
+  const anyWin=players.some(p=>p.front>=WIN);
+  svg+=`<circle cx="${gx.toFixed(1)}" cy="${gameY.toFixed(1)}" r="7" fill="${anyWin?cssColor(COLORS[winnerIdx()%3]):'#ffffff'}" fill-opacity="${anyWin?0.25:1}" stroke="#111" stroke-width="1.3"/>`;
+  svg+=`<text x="${gx.toFixed(1)}" y="${(gameY+19).toFixed(1)}" font-family="DM Mono, monospace" font-size="8.5" fill="#999" text-anchor="middle">121 · game</text>`;
+
   // pegs
-  function peg(n,solid){
+  function peg(n,L,solid){
     if(n<1) return '';
-    const P = (n>=WIN)? {x:gx,y:gy} : pos[n]||pos[120];
-    return `<circle cx="${P.x}" cy="${P.y}" r="${R-1}" fill="${solid?col:'#ffffff'}" stroke="${col}" stroke-width="2"/>`;
+    const col=cssColor(players[L].color);
+    let P;
+    if(n>=WIN){P={x:gx+(L-(lanes-1)/2)*7, y:gameY};}
+    else P=pos(n,L);
+    return `<circle cx="${P.x.toFixed(1)}" cy="${P.y.toFixed(1)}" r="${(R+0.6).toFixed(1)}" fill="${solid?col:'#ffffff'}" stroke="${col}" stroke-width="2"/>`;
   }
-  const pegs=peg(player.back,false)+peg(player.front,true);
-  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${holes}${pegs}</svg>`;
+  for(let L=0;L<lanes;L++){svg+=peg(players[L].back,L,false)+peg(players[L].front,L,true);}
+
+  return `<svg viewBox="0 0 ${w.toFixed(1)} ${h.toFixed(1)}" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
 }
 
 function render(){
@@ -162,12 +168,14 @@ function render(){
   if(wi>=0){
     const p=state.players[wi];
     const others=state.players.filter((_,i)=>i!==wi);
-    let tag='';
     const low=Math.min(...others.map(o=>o.front));
+    let tag='';
     if(low<DBLSKUNK) tag='Double skunk! 😼';
     else if(low<SKUNK) tag='Skunk! 🦨';
     wEl.innerHTML=`<div class="winner">${escapeHtml(p.name)} wins 🏁<small>${tag||('final: '+state.players.map(o=>o.front).join(' – '))}</small></div>`;
   } else wEl.innerHTML='';
+
+  document.getElementById('board').innerHTML=boardSVG(state.players);
 
   const box=document.getElementById('players');
   box.innerHTML='';
@@ -176,13 +184,17 @@ function render(){
     const card=document.createElement('div');
     card.className='card';
     const quick=QUICK.map(q=>`<button data-add="${i}" data-pts="${q}" class="${q===2||q===15?'hot':''}">+${q}</button>`).join('');
+    const canRemove=state.players.length>MIN_LANES;
     card.innerHTML=`
       <div class="pc-top">
         <div class="pc-name">
           <span class="dot" style="background:${col}"></span>
-          <input value="${escapeAttr(p.name)}" data-name="${i}" maxlength="18">
+          <input value="${escapeAttr(p.name)}" data-name="${i}" maxlength="16">
         </div>
-        <div class="score" style="color:${col}">${p.front}<small>/ 121</small></div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="score" style="color:${col}">${p.front}<small>/121</small></div>
+          ${canRemove?`<button class="ghost" data-remove="${i}" title="Remove lane" style="padding:4px 9px;">&times;</button>`:''}
+        </div>
       </div>
       <div class="pegrow">${quick}</div>
       <div class="custom">
@@ -191,13 +203,11 @@ function render(){
         <span class="spacer"></span>
         <button class="ghost" data-undo="${i}">Undo</button>
       </div>
-      <div class="track">${trackSVG(p)}</div>
-      <div class="legend"><span>● front peg (current)</span><span>○ back peg (last)</span><span>to go: ${Math.max(0,WIN-p.front)}</span></div>
+      <div class="legend">to go: ${Math.max(0,WIN-p.front)}</div>
     `;
     box.appendChild(card);
   });
-  document.getElementById('addPlayer').style.display=state.players.length>=3?'none':'';
-  document.getElementById('foot').textContent='Pegs leapfrog each other — the front peg is your score. First to 121 wins.';
+  document.getElementById('addPlayer').disabled=state.players.length>=MAX_LANES;
   wire();
 }
 
@@ -205,6 +215,7 @@ function wire(){
   document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addPoints(+b.dataset.add,+b.dataset.pts));
   document.querySelectorAll('[data-addcustom]').forEach(b=>b.onclick=()=>{const inp=document.querySelector(`[data-input="${b.dataset.addcustom}"]`);addPoints(+b.dataset.addcustom,inp.value);inp.value='';});
   document.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>undo(+b.dataset.undo));
+  document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>removePlayer(+b.dataset.remove));
   document.querySelectorAll('[data-name]').forEach(inp=>inp.onchange=()=>{state.players[+inp.dataset.name].name=inp.value||('Player '+(+inp.dataset.name+1));save();render();});
   document.querySelectorAll('[data-input]').forEach(inp=>inp.onkeydown=(e)=>{if(e.key==='Enter'){addPoints(+inp.dataset.input,inp.value);inp.value='';}});
 }
